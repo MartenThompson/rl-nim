@@ -1,24 +1,40 @@
 # Class definitions for agents
 
-import random as rnd
+import numpy.random as rnd
 import numpy as np
 import sys
 import numpy as np
 from nimUtils import board_bitsum
 from nimUtils import rand_move
+from statesActions import initialize_Q
+from statesActions import get_hash
+from statesActions import de_hash
 
 class QAgent():
     """
-    off-policy, so moving is distinct from learning
+    off-policy, so moving is independent of learning
     """
-    def __init__(self):
+    def __init__(self, num_piles, init_Qval, eps):
         self.games_played = 0
         self.games_won = 0
-        self.Q = np.zeros([2,2])
+        self.Q = initialize_Q(num_piles, init_Qval)
+        self.eps = eps
 
-    def move(board):
-        # make a move mid-game
-        print('move method')
+    def move(self, state_hash):
+        # follow an epsilon greedy policy to make a move mid-game
+        
+        if rnd.uniform() < self.eps:
+            # random move
+            return rand_move(state_hash)
+        else: 
+            # greedy move
+            acts = self.Q[state_hash]
+            best_act = de_hash(max(acts, key=acts.get))
+            state = de_hash(state_hash)
+            new_state = [s - a for s,a in zip(state, best_act)]
+            return get_hash(new_state)
+            
+        
         
         
 
