@@ -1,6 +1,7 @@
 # utility methods for agents
 from functools import reduce
 from operator import xor
+import numpy as np
 import numpy.random as rnd
 from statesActions import get_hash
 from statesActions import de_hash
@@ -22,7 +23,7 @@ def board_bitsum(board):
     return(reduce(xor, board))
 
 
-def rand_move(state_hash):
+def rand_moveold(state_hash):
     """
     Finds a random legal move on board.
     Returns state of new board
@@ -46,6 +47,22 @@ def rand_move(state_hash):
         
     
     
+
+def rand_move(board_state_hash):
+    state = de_hash(board_state_hash)
     
+    act = np.zeros(len(state), dtype=int).tolist()
     
+    pile_size = 0
+    pile = 0
+    while 0 == pile_size:
+        pile = rnd.randint(0,len(state),1)[0]
+        pile_size = state[pile]
+        
+    if 1 == pile_size: 
+        act[pile] = 1
+        return(get_hash(act))
     
+    take = rnd.randint(1,state[pile],1)[0]
+    act[pile] = take
+    return(get_hash(act))

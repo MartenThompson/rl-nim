@@ -14,45 +14,82 @@ class QAgent():
     """
     off-policy, so moving is independent of learning
     """
-    def __init__(self, num_piles, init_Qval, eps):
+    def __init__(self, num_piles, starting_board, init_Qval, eps):
         self.games_played = 0
         self.games_won = 0
+        # call Q(state) to get available actions. Call avail_acts(act_hash) to get value
         self.Q = initialize_Q(num_piles, init_Qval)
         self.eps = eps
+        self.alpha = 0.1
+        self.gamma = 1
+        self.previous_state = starting_board
+        self.most_recent_actn = None
+        self.most_recent_state= None
 
+
+    # follow an epsilon greedy policy to make a move mid-game
+    # Returns STATE hash
     def move(self, state_hash):
-        # follow an epsilon greedy policy to make a move mid-game
+        print('moving')       
+        self.previous_state = state_hash
         
         if rnd.uniform() < self.eps:
-            # random move
-            return rand_move(state_hash)
+            # random action
+            act_hash = rand_move(state_hash)
+            
         else: 
-            # greedy move
+            # greedy action
             acts = self.Q[state_hash]
-            best_act = de_hash(max(acts, key=acts.get))
-            state = de_hash(state_hash)
-            new_state = [s - a for s,a in zip(state, best_act)]
-            return get_hash(new_state)
+            act_hash = max(acts, key=acts.get)
+        
+        self.most_recent_actn = act_hash
+        print('Most recent action (move):', self.most_recent_actn)
+        
+        state = de_hash(state_hash)
+        act = de_hash(act_hash)
+        new_state = [s - a for s,a in zip(state, act)]
+        self.most_recent_state = get_hash(new_state)
+        
+        return get_hash(new_state)
+        
+
             
         
-        
-        
+    def bellman(self, reward):
+         avail_acts = self.Q[self.previous_state]
+         
+         next_acts = self.Q[self.most_recent_state]
+         
+         max_next_vals = 0 # idk what to do about this value when you win?
+         if 0 < len(next_acts): 
+             max_next_vals = next_acts[max(next_acts, key=next_acts.get)]
+         
+         # this updates Q
+         print('Most recent action (ball):', self.most_recent_actn)
+         avail_acts[self.most_recent_actn] += self.alpha*(reward + self.gamma*max_next_vals + avail_acts[self.most_recent_actn])
 
-    def learn():
+        
+    ## win_lose_flag: 1-won, 0-lose, None-midgame
+    def learn(self, win_lose_flag, reward):
         # learning mid-game
         print('learn method')
-    
-    def learn_end():
-        # learning after game ends
-        print('learn_end method')
-
-
-
+        
+        if 1 == win_lose_flag:
+            self.games_played += 1
+            self.games_won +=1 
+            self.bellman(reward)
+        elif 0 == win_lose_flag:
+            self.games_played += 1
+            self.bellman(reward)
+        else:
+            # mid-game, no reward
+            self.bellman(0)
+        
 
 
 class PerfectAgent():
     def move(self, board): 
-        # make an omptimal move mid-game
+        # make an optimal move mid-game
         # mutates board by reference
         
                 
