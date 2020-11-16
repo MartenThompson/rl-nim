@@ -9,6 +9,8 @@ from statesActions import de_hash
 def board_bitsum(board):
     """
     Calculates bitsum (component-wise XOR sum) of board.
+    
+    An optimal move results in a bitsum == 0
 
     Parameters
     ----------
@@ -43,7 +45,7 @@ def rand_moveold(state_hash):
     
     take = rnd.randint(1,state[pile],1)[0]
     new_state[pile] = state[pile] - take
-    return get_hash(new_state )
+    return get_hash(new_state)
         
     
     

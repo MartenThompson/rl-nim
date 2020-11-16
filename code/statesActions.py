@@ -38,6 +38,7 @@ def initialize_Q(num_piles, init_Qval):
         act_val_dict = {}
         
         for j in range(len(acts)):
+            init_Qval = np.random.uniform(-0.1,0.1,1)[0]
             act_val_dict[acts[j]] = init_Qval
         
         Q[get_hash(all_states[i])] = act_val_dict
