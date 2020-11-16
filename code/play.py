@@ -63,27 +63,27 @@ def play_nim(p1, p2, board_hash, win_reward, lose_reward):
 
 
 def main():
-    n_games = 10000 # int(5e3)
-    num_piles = 2
+    n_games = 60000 # int(5e3)
+    num_piles = 3
     Q_init = 0.0
     
     rnd.seed(5)
     
     # starting_board = get_hash(rnd.randint(0,9,3).tolist())
-    starting_board = get_hash([1,2])
+    starting_board = get_hash([4,5,8])
     
     #p1 = QAgent('p102', num_piles, starting_board, Q_init, 0.1) 
-    p1 = QAgent('p1', num_piles, starting_board, Q_init, 0.8, 0.1, 0.5)
+    p1 = QAgent('p1', num_piles, starting_board, Q_init, 0.1, 0.1, -0.5)
     # p2 = PerfectAgent('perfect')
     p2 = QAgent('p2', num_piles, starting_board, Q_init, 0.2, 0.1, 0.9)
     
-    
+    """
     for i in range(n_games):
         p1.started = True
         p2.started = False
         
-        #if i > 9000:
-        #    print('debug')
+        if i > 900:
+            print('debug')
         play_nim(p1, p2, starting_board, 1, -1)
 
     """
@@ -101,7 +101,7 @@ def main():
             p1.started = False
             p2.started = True
             play_nim(p2, p1, starting_board, 1, -1)
-    """
+    
     p1.write()
     p2.write()
     
