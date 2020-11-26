@@ -16,21 +16,25 @@ class QAgent():
     """
     off-policy, so moving is independent of learning
     """
-    def __init__(self, name, num_piles, starting_board, init_Qval, eps, alpha, gamma):
+    def __init__(self, name, starting_board_hash, init_Qval, eps, alpha, gamma):
         self.name = name
         self.games_played = 0
         self.games_won = 0
+        
         # call Q(state) to get available actions. Call avail_acts(act_hash) to get value
+        num_piles = len(de_hash(starting_board_hash))
         self.Q = initialize_Q(num_piles, init_Qval)
+        
         self.eps = eps
         self.alpha = alpha
         self.gamma = gamma
-        self.previous_state = starting_board
+        self.previous_state = starting_board_hash
         self.most_recent_actn = None
         self.most_recent_state= None
         self.optimal_moves = []
         self.optimal_per_game = []
         self.optimal_per_start = []
+        self.winlose_per_start = []
         self.started = None
 
 
@@ -99,6 +103,7 @@ class QAgent():
             self.optimal_per_game.append(np.mean(self.optimal_moves))
             if self.started:
                 self.optimal_per_start.append(np.mean(self.optimal_moves))
+                self.winlose_per_start.append(1)
             
             self.optimal_moves = []
         elif 0 == win_lose_flag:
@@ -107,6 +112,7 @@ class QAgent():
             self.optimal_per_game.append(np.mean(self.optimal_moves))
             if self.started:
                 self.optimal_per_start.append(np.mean(self.optimal_moves))
+                self.winlose_per_start.append(0)
             
             self.optimal_moves = []
         else:
@@ -141,6 +147,9 @@ class QAgent():
         with file:
             write = csv.writer(file)
             write.writerows(file_contents)
+            
+    def report_perc(self):
+        print('n')
         
 
 class SARSAAgent():
