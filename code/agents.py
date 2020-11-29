@@ -94,7 +94,6 @@ class QAgent():
     ## win_lose_flag: 1-won, 0-lose, None-midgame
     def learn(self, win_lose_flag, reward):
         # learning mid-game
-        # print('learn method')
         
         if 1 == win_lose_flag:
             self.games_played += 1
@@ -118,22 +117,7 @@ class QAgent():
         else:
             # mid-game, no reward
             self.bellman(win_lose_flag, reward)
-            
-    def regularize(self, factor):
-        all_vals = []
-        
-        for key, sub_dict in self.Q.items():
-            for k,v in sub_dict.items():
-                all_vals.append(v)
-        
-        max_val = abs(max(all_vals, key=abs))
-        
-        if max_val != 0:
-            for key, sub_dict in self.Q.items():
-                for k,v in sub_dict.items():
-                    self.Q[key][k] = factor*(self.Q[key][k]/max_val)
-        
-        
+             
             
     # Header: runtime(s), test accuracy, 0.0
     # Then: epoch, epoch loss, epoch accuracy
@@ -152,25 +136,31 @@ class QAgent():
         print('n')
         
 
-class SARSAAgent():
+class QtAgent():
     """
-    on-policy
+    off-policy, so moving is independent of learning
     """
-    def __init__(self, name, num_piles, starting_board, init_Qval, eps, alpha, gamma):
+    def __init__(self, name, starting_board_hash, init_Qval, eps, alpha, gamma, eta):
         self.name = name
         self.games_played = 0
         self.games_won = 0
+        
         # call Q(state) to get available actions. Call avail_acts(act_hash) to get value
+        num_piles = len(de_hash(starting_board_hash))
         self.Q = initialize_Q(num_piles, init_Qval)
+        
         self.eps = eps
+        self.eps_0 = eps
         self.alpha = alpha
         self.gamma = gamma
-        self.previous_state = starting_board
+        self.eta = eta
+        self.previous_state = starting_board_hash
         self.most_recent_actn = None
         self.most_recent_state= None
         self.optimal_moves = []
         self.optimal_per_game = []
         self.optimal_per_start = []
+        self.winlose_per_start = []
         self.started = None
 
 
@@ -207,10 +197,9 @@ class SARSAAgent():
             
         
     def bellman(self, win_lose_flag, reward):
-        
         if win_lose_flag == 0 or win_lose_flag == 1:
             # game over
-            self.Q[self.previous_state][self.most_recent_actn] += self.alpha*(reward + self.Q[self.previous_state][self.most_recent_actn])
+            self.Q[self.previous_state][self.most_recent_actn] += self.alpha*(reward - self.Q[self.previous_state][self.most_recent_actn])
             return
         
         avail_acts = self.Q[self.previous_state]
@@ -222,52 +211,42 @@ class SARSAAgent():
             max_next_vals = next_acts[max(next_acts, key=next_acts.get)]
          
         # this updates Q
-        # print('Most recent action (ball):', self.most_recent_actn)
-        avail_acts[self.most_recent_actn] += self.alpha*(reward + self.gamma*max_next_vals + avail_acts[self.most_recent_actn])
-        #print(avail_acts[self.most_recent_actn])
+        avail_acts[self.most_recent_actn] += self.alpha*(reward + self.gamma*max_next_vals - avail_acts[self.most_recent_actn])
+        
 
+    def update_eps(self):
+        self.eps = self.eps_0*np.exp(-self.eta*self.games_played)
         
-    ## win_lose_flag: 1-won, 0-lose, None-midgame
+        
     def learn(self, win_lose_flag, reward):
-        # learning mid-game
-        # print('learn method')
-        
+    # win_lose_flag: 1-won, 0-lose, None-midgame    
         if 1 == win_lose_flag:
+            # game over, won
             self.games_played += 1
+            self.update_eps()
             self.games_won +=1 
             self.bellman(win_lose_flag, reward)
             self.optimal_per_game.append(np.mean(self.optimal_moves))
             if self.started:
                 self.optimal_per_start.append(np.mean(self.optimal_moves))
+                self.winlose_per_start.append(1)
             
             self.optimal_moves = []
         elif 0 == win_lose_flag:
+            # game over, lost
             self.games_played += 1
+            self.update_eps()
             self.bellman(win_lose_flag, reward)
             self.optimal_per_game.append(np.mean(self.optimal_moves))
             if self.started:
                 self.optimal_per_start.append(np.mean(self.optimal_moves))
+                self.winlose_per_start.append(0)
             
             self.optimal_moves = []
         else:
             # mid-game, no reward
             self.bellman(win_lose_flag, reward)
-            
-    def regularize(self, factor):
-        all_vals = []
-        
-        for key, sub_dict in self.Q.items():
-            for k,v in sub_dict.items():
-                all_vals.append(v)
-        
-        max_val = abs(max(all_vals, key=abs))
-        
-        if max_val != 0:
-            for key, sub_dict in self.Q.items():
-                for k,v in sub_dict.items():
-                    self.Q[key][k] = factor*(self.Q[key][k]/max_val)
-        
-        
+             
             
     # Header: runtime(s), test accuracy, 0.0
     # Then: epoch, epoch loss, epoch accuracy
@@ -281,8 +260,9 @@ class SARSAAgent():
         with file:
             write = csv.writer(file)
             write.writerows(file_contents)
-
-
+            
+    def report_perc(self):
+        print('n')
 
 
 
@@ -296,7 +276,7 @@ class PerfectAgent():
         self.games_started_won = 0
         self.started = None
     
-    # Returns STATE hash (i.e. board)
+    # Returns state hash (i.e. board)
     def move(self, state_hash): 
         # make an optimal move mid-game
         # mutates board by reference
