@@ -45,6 +45,10 @@ def initialize_Q(num_piles, init_Qval):
     
     return(Q)
 
+def initialize_V(num_piles, mu_0, lambda_0, alpha_0, beta_0):
+    V = initialize_Q(num_piles, [mu_0, lambda_0, alpha_0, beta_0])
+    
+    return(V)
 
 
 
