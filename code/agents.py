@@ -9,8 +9,12 @@ import numpy as np
 from nimUtils import board_bitsum
 from nimUtils import rand_move
 from statesActions import initialize_Q
+from statesActions import initialize_V
 from statesActions import get_hash
 from statesActions import de_hash
+
+from scipy.stats import gamma
+from scipy.stats import norm 
 
 class QAgent():
     """
@@ -264,6 +268,131 @@ class QtAgent():
     def report_perc(self):
         print('n')
 
+class BayesAgent():
+    """
+    on-policy
+    """
+    def __init__(self, name, starting_board_hash, mu_0, lamb_0, alpha_0, beta_0, discount):
+        self.name = name
+        self.games_played = 0
+        self.games_won = 0
+        
+        # call Q(state) to get available actions. Call avail_acts(act_hash) to get value
+        num_piles = len(de_hash(starting_board_hash))
+        self.V = initialize_V(num_piles, mu_0, lamb_0, alpha_0, beta_0)
+        
+        #self.mu = mu_0
+        #self.lamb = lamb_0
+        #self.alpha = alpha_0
+        #self.beta = beta_0
+        self.discount = discount
+        
+        self.sa_history = [] # moves (state, action) from current game
+        
+        #self.previous_state = starting_board_hash
+        #self.most_recent_actn = None
+        #self.most_recent_state= None
+        self.optimal_moves = [] # individual game
+        self.optimal_per_game = [] # running log
+        self.optimal_per_start = []
+        self.winlose_per_start = []
+        self.started = None
+
+
+    # follow an epsilon greedy policy to make a move mid-game
+    # Returns STATE hash (i.e. board)
+    def move(self, state_hash):
+        
+        avail_acts = self.V[state_hash]
+        v_all = np.zeros(len(avail_acts))
+        a_all = np.empty(len(avail_acts), dtype='object') # hold strings (hashes)
+        v = 0
+        
+        for a, h in avail_acts.items():
+            m = norm.rvs(loc=h[0], scale=1/h[1], size=1)[0]
+            t = gamma.rvs(a=h[2], scale=h[3], size=1)[0]
+            v_all[v] = norm.rvs(loc=m, scale=1/t, size=1)[0]
+            a_all[v] = a
+            v += 1
+        
+        act_hash = a_all[max(range(len(v_all)), key=v_all.__getitem__)]
+        
+        state = de_hash(state_hash)
+        act = de_hash(act_hash)
+        new_state = [s - a for s,a in zip(state, act)]
+        
+        
+        optimal = board_bitsum(new_state) == 0
+        self.optimal_moves.append(optimal)
+        
+        self.sa_history.append([state_hash, act_hash])
+        
+        return get_hash(new_state)
+        
+
+            
+        
+    def update_V(self, win_lose_flag, reward):
+        T = len(self.sa_history)
+        
+        for turn in range(T):
+            r = reward * (self.discount**(T-turn))
+            state = self.sa_history[turn][0]
+            act = self.sa_history[turn][1]
+            [mu_t, lamb_t, alpha_t, beta_t] = self.V[state][act]
+            
+            self.V[state][act] = [(mu_t*lamb_t + r)/(lamb_t + 1),
+                             lamb_t + 1,
+                             alpha_t + 0.5,
+                             beta_t + 0.5 + (lamb_t)/(lamb_t + 1)*((r - mu_t)**2)/2]
+    
+
+        
+        
+    def learn(self, win_lose_flag, reward):
+    # win_lose_flag: 1-won, 0-lose, None-midgame    
+        if 1 == win_lose_flag:
+            # game over, won
+            self.games_played += 1
+            self.games_won +=1 
+            self.update_V(win_lose_flag, reward)
+            self.optimal_per_game.append(np.mean(self.optimal_moves))
+            
+            if self.started:
+                self.optimal_per_start.append(np.mean(self.optimal_moves))
+                self.winlose_per_start.append(1)
+            
+            self.optimal_moves = []
+            self.sa_history = []
+        elif 0 == win_lose_flag:
+            # game over, lost
+            self.games_played += 1
+            self.update_V(win_lose_flag, reward)
+            self.optimal_per_game.append(np.mean(self.optimal_moves))
+            
+            if self.started:
+                self.optimal_per_start.append(np.mean(self.optimal_moves))
+                self.winlose_per_start.append(0)
+            
+            self.optimal_moves = []
+            self.sa_history = []
+        #else:
+            # mid-game, no learning
+             
+            
+    # Header: runtime(s), test accuracy, 0.0
+    # Then: epoch, epoch loss, epoch accuracy
+    def write(self):
+        filename = 'out/BayesAgent_'+ self.name +  datetime.now().strftime("%Y_%m_%d-%H_%M_%S") + '.csv'
+        file = open(filename, 'w+', newline ='')
+        file_contents = np.zeros([len(self.optimal_per_start),1], dtype=float)
+        file_contents[:,0] = self.optimal_per_start
+
+        
+        with file:
+            write = csv.writer(file)
+            write.writerows(file_contents)
+            
 
 
 
@@ -341,4 +470,8 @@ class PerfectAgent():
         with file:
             write = csv.writer(file)
             write.writerows(file_contents)
+
+
+
+
 
