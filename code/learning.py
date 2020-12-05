@@ -1,11 +1,10 @@
-import numpy as np
+import numpy.random as rnd
 import pandas as pd
 from agents import QAgent
 from agents import QtAgent
 from agents import BayesAgent
 from agents import PerfectAgent
 from statesActions import get_hash
-from statesActions import de_hash
 
 import csv
 from datetime import datetime
@@ -14,7 +13,7 @@ from play import play_nim
 from play import train_agents
 
 def log_contents(file_name, file_contents):
-    file_name = file_name + + datetime.now().strftime('%Y_%m_%d') + '.csv'
+    file_name = file_name + datetime.now().strftime('%Y_%m_%d') + '.csv'
     file = open(file_name, 'w+', newline ='')
 
     with file:
@@ -65,7 +64,7 @@ def log_Q_learn(n_games, p1, p2, win_reward, lose_reward):
         Qseries.loc[i] = temp
     
     
-    Qseries.to_csv('final/Qvis/' + p1.name + '_series.csv', index=False)
+    Qseries.to_csv('../final/Q_vis/' + p1.name + '_series.csv', index=False)
 
 
 def vis_learning():
@@ -101,12 +100,9 @@ def QvQgrid():
     REPS = 5
     Q_init = 0.0
     
-    epsilons = [0.1,0.3,0.5,0.7,0.9]
-    epsilons = [0.7,0.9]
+    epsilons = [0.1, 0.3, 0.5]
     alphas = [0.1,0.3,0.5,0.7,0.9]
-    # alphas = [0.1]
     gammas = [-0.1,-0.3,-0.5,-0.7,-0.9]
-    # gammas = [-0.1]
     
     setting = [[e,a,g] for e in epsilons for a in alphas for g in gammas] 
     
@@ -139,11 +135,11 @@ def QvQgrid():
             p2_opt_percs.append(p2_stats[0])
             p2_winlose.append(p2_stats[1])            
         
-        file_name = 'final/QvQ_optimal_moves' + str(epsilon) + str(alpha) + str(gamma) +'vSelfAll_'
+        file_name = '../final/QvQ/QvQ_optimal_moves' + str(epsilon) + str(alpha) + str(gamma) +'vSelfAll_'
         file_contents = p1_opt_percs + p2_opt_percs
         log_contents(file_name, file_contents)
             
-        file_name = 'final/QvQ_wins' + str(epsilon) + str(alpha) + str(gamma) +'vSelfAll_'
+        file_name = '../final/QvQ/QvQ_wins' + str(epsilon) + str(alpha) + str(gamma) +'vSelfAll_'
         file_contents = p1_winlose + p2_winlose
         log_contents(file_name, file_contents)
 
@@ -163,10 +159,9 @@ def QtvQtgrid():
     Q_init = 0.0
     
     epsilons = [0.1, 0.5, 0.9]
-    alphas = [0.3]
-    gammas = [-0.5]
-    # etas = [0.001, 0.005, 0.0001]
-    etas = [0.00005, 0.00001]
+    alphas = [0.1, 0.3]
+    gammas = [-0.5, -0.9]
+    etas = [0.001, 0.0001, 0.00001]
     
     setting = [[e,a,g,n] for e in epsilons for a in alphas for g in gammas for n in etas] 
     
@@ -200,11 +195,11 @@ def QtvQtgrid():
             p2_opt_percs.append(p2_stats[0])
             p2_winlose.append(p2_stats[1])            
         
-        file_name = 'final/QtvQt_optimal_moves' + str(epsilon) + str(alpha) + str(gamma) + str(eta) +'vSelfAll_'
+        file_name = '../final/QtvQt/QtvQt_optimal_moves' + str(epsilon) + str(alpha) + str(gamma) + str(eta) +'vSelfAll_'
         file_contents = p1_opt_percs + p2_opt_percs
         log_contents(file_name, file_contents)
             
-        file_name = 'final/QtvQt_wins' + str(epsilon) + str(alpha) + str(gamma) + str(eta) +'vSelfAll_'
+        file_name = '../final/QtvQt/QtvQt_wins' + str(epsilon) + str(alpha) + str(gamma) + str(eta) +'vSelfAll_'
         file_contents = p1_winlose + p2_winlose
         log_contents(file_name, file_contents)
     
@@ -212,7 +207,7 @@ def QtvQtgrid():
     
     
 def bayesAgents():
-    n_games = 20000
+    n_games = 25000
     reps = 5
     mu_0 = 0
     lamb_0 = 2
@@ -245,24 +240,24 @@ def bayesAgents():
             p2_opt_percs.append(p2_stats[0])
             p2_winlose.append(p2_stats[1])            
         
-        filen_ame = 'out/Bayes_optimal_moves' + str(discount) + 'vSelfAll_'
+        file_name = '../final/Bayes/Bayes_optimal_moves' + str(discount) + 'vSelfAll_'
         file_contents = p1_opt_percs + p2_opt_percs
         log_contents(file_name, file_contents)
             
-        file_name = 'out/Bayes_wins' + str(discount) +'vSelfAll_'
+        file_name = '../final/Bayes/Bayes_wins' + str(discount) +'vSelfAll_'
         file_contents = p1_winlose + p2_winlose
         log_contents(file_name, file_contents)
 
     print('learning complete')
     
 def bayesVis():
-    
+    print('v')
     
 
 if __name__ == "__main__":
     # vis_learning()      # 15m
-    # QvQgrid()           # 5h
-    # QtvQtgrid()         # 20m
-    # bayesAgents()       # 2.5h
-    bayesVis()
+    QvQgrid()           # 5h
+    QtvQtgrid()         # 20m
+    bayesAgents()       # 2.5h
+    # bayesVis()
     # BestvRand()
