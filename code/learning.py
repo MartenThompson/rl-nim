@@ -1,8 +1,28 @@
+import numpy as np
+import pandas as pd
+from agents import QAgent
+from agents import QtAgent
+from agents import BayesAgent
+from agents import PerfectAgent
+from statesActions import get_hash
+from statesActions import de_hash
+
+import csv
+from datetime import datetime
+
 from play import play_nim
 from play import train_agents
 
+def log_contents(file_name, file_contents):
+    file_name = file_name + + datetime.now().strftime('%Y_%m_%d') + '.csv'
+    file = open(file_name, 'w+', newline ='')
 
-def print_Q_learn(n_games, p1, p2, win_reward, lose_reward):
+    with file:
+        write = csv.writer(file)
+        write.writerows(file_contents)
+
+
+def log_Q_learn(n_games, p1, p2, win_reward, lose_reward):
     """
     Write out Q table for p1 as it learns on board [2,2]. P1 always moves first.
     """
@@ -59,12 +79,12 @@ def vis_learning():
     p1 = QAgent('conservative', starting_board_hash, 0.0, 0.1, 0.1, -0.1)
     p2 = QAgent('conservative', starting_board_hash, 0.0, 0.1, 0.1, -0.1)
     
-    print_Q_learn(N_GAMES, p1, p2, 1, -1)
+    log_Q_learn(N_GAMES, p1, p2, 1, -1)
     
     # aggressive players
     p1 = QAgent('aggressive', starting_board_hash, 0.0, 0.1, 0.9, -0.9)
     p2 = QAgent('aggressive', starting_board_hash, 0.0, 0.1, 0.9, -0.9)
-    print_Q_learn(N_GAMES, p1, p2, 1, -1)
+    log_Q_learn(N_GAMES, p1, p2, 1, -1)
     
     print('complete')
 
@@ -119,22 +139,14 @@ def QvQgrid():
             p2_opt_percs.append(p2_stats[0])
             p2_winlose.append(p2_stats[1])            
         
-        filename = 'final/' + 'optimal_moves' + str(epsilon) + str(alpha) + str(gamma) +'vSelfAll_'+ datetime.now().strftime("%Y_%m_%d-%H_%M_%S") + '.csv'
-        file = open(filename, 'w+', newline ='')
+        file_name = 'final/QvQ_optimal_moves' + str(epsilon) + str(alpha) + str(gamma) +'vSelfAll_'
         file_contents = p1_opt_percs + p2_opt_percs
-    
-        with file:
-            write = csv.writer(file)
-            write.writerows(file_contents)
+        log_contents(file_name, file_contents)
             
-        filename = 'final/' + 'wins' + str(epsilon) + str(alpha) + str(gamma) +'vSelfAll_'+ datetime.now().strftime("%Y_%m_%d-%H_%M_%S") + '.csv'
-        file = open(filename, 'w+', newline ='')
+        file_name = 'final/QvQ_wins' + str(epsilon) + str(alpha) + str(gamma) +'vSelfAll_'
         file_contents = p1_winlose + p2_winlose
-        
-        with file:
-            write = csv.writer(file)
-            write.writerows(file_contents)
-    
+        log_contents(file_name, file_contents)
+
     print('learning complete')
     
     
@@ -188,21 +200,13 @@ def QtvQtgrid():
             p2_opt_percs.append(p2_stats[0])
             p2_winlose.append(p2_stats[1])            
         
-        filename = 'final/QtvQt' + 'optimal_moves' + str(epsilon) + str(alpha) + str(gamma) + str(eta) +'vSelfAll_'+ datetime.now().strftime('%Y_%m_%d') + '.csv'
-        file = open(filename, 'w+', newline ='')
+        file_name = 'final/QtvQt_optimal_moves' + str(epsilon) + str(alpha) + str(gamma) + str(eta) +'vSelfAll_'
         file_contents = p1_opt_percs + p2_opt_percs
-    
-        with file:
-            write = csv.writer(file)
-            write.writerows(file_contents)
+        log_contents(file_name, file_contents)
             
-        filename = 'final/QtvQt' + 'wins' + str(epsilon) + str(alpha) + str(gamma) + str(eta) +'vSelfAll_'+ datetime.now().strftime('%Y_%m_%d') + '.csv'
-        file = open(filename, 'w+', newline ='')
+        file_name = 'final/QtvQt_wins' + str(epsilon) + str(alpha) + str(gamma) + str(eta) +'vSelfAll_'
         file_contents = p1_winlose + p2_winlose
-        
-        with file:
-            write = csv.writer(file)
-            write.writerows(file_contents)
+        log_contents(file_name, file_contents)
     
     print('learning complete')
     
@@ -215,7 +219,7 @@ def bayesAgents():
     alpha_0 = 1/2
     beta_0 = 1
     #discounts = [0.1, 0.3, 0.5, 0.7, 0.9, 0.95, 0.99]
-    discounts = [0.1, 0.3, 0.5, 0.7, 0.9]
+    discounts = [0.1, 0.5, 0.9, 0.99]
     
     for discount in discounts:
         print('d:', discount)
@@ -241,25 +245,18 @@ def bayesAgents():
             p2_opt_percs.append(p2_stats[0])
             p2_winlose.append(p2_stats[1])            
         
-        filename = 'out/Bayes' + 'optimal_moves' + str(discount) + 'vSelfAll_'+ datetime.now().strftime('%Y_%m_%d') + '.csv'
-        file = open(filename, 'w+', newline ='')
+        filen_ame = 'out/Bayes_optimal_moves' + str(discount) + 'vSelfAll_'
         file_contents = p1_opt_percs + p2_opt_percs
-    
-        with file:
-            write = csv.writer(file)
-            write.writerows(file_contents)
+        log_contents(file_name, file_contents)
             
-        filename = 'out/Bayes' + 'wins' + str(discount) +'vSelfAll_'+ datetime.now().strftime('%Y_%m_%d') + '.csv'
-        file = open(filename, 'w+', newline ='')
+        file_name = 'out/Bayes_wins' + str(discount) +'vSelfAll_'
         file_contents = p1_winlose + p2_winlose
-        
-        with file:
-            write = csv.writer(file)
-            write.writerows(file_contents)
+        log_contents(file_name, file_contents)
 
     print('learning complete')
     
 def bayesVis():
+    
     
 
 if __name__ == "__main__":

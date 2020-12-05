@@ -1,19 +1,11 @@
 # Primary script in project
 
-from agents import QAgent
-from agents import QtAgent
-from agents import BayesAgent
-from agents import PerfectAgent
-from statesActions import get_hash
-from statesActions import de_hash
 
-import csv
-from datetime import datetime
 import numpy.random as rnd
-import numpy as np
-import pandas as pd
 import sys
 
+from statesActions import get_hash
+from statesActions import de_hash
 
 def play_nim(p1, p2, board_hash, win_reward, lose_reward):
     """
