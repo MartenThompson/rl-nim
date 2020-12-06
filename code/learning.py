@@ -1,3 +1,4 @@
+import numpy as np
 import numpy.random as rnd
 import pandas as pd
 from agents import QAgent
@@ -68,7 +69,6 @@ def log_Q_learn(n_games, p1, p2, win_reward, lose_reward):
 
 
 def vis_learning():
-
     rnd.seed(808)
     
     N_GAMES = 50000
@@ -250,14 +250,116 @@ def bayesAgents():
 
     print('learning complete')
     
+
+def log_Bayes_learn(n_games, p1, p2, win_reward, lose_reward):
+    """
+    Write out Q table for p1 as it learns on board [2,2]. P1 always moves first.
+    """
+    
+    starting_board_hash = get_hash([2,2])
+    
+    # values of mu over time
+    mu_series = pd.DataFrame(columns=['01-00', 
+                                    '02-00', '02-01',
+                                    '10-00',
+                                    '11-01', '11-10',
+                                    '12-02', '12-10', '12-11',
+                                    '20-00', '20-10',
+                                    '21-01', '21-11', '21-20',
+                                    '22-02', '22-12', '22-20', '22-21'])
+    lamb_series = pd.DataFrame(columns=['01-00', 
+                                    '02-00', '02-01',
+                                    '10-00',
+                                    '11-01', '11-10',
+                                    '12-02', '12-10', '12-11',
+                                    '20-00', '20-10',
+                                    '21-01', '21-11', '21-20',
+                                    '22-02', '22-12', '22-20', '22-21'])
+    alpha_series = pd.DataFrame(columns=['01-00', 
+                                    '02-00', '02-01',
+                                    '10-00',
+                                    '11-01', '11-10',
+                                    '12-02', '12-10', '12-11',
+                                    '20-00', '20-10',
+                                    '21-01', '21-11', '21-20',
+                                    '22-02', '22-12', '22-20', '22-21'])
+    beta_series = pd.DataFrame(columns=['01-00', 
+                                    '02-00', '02-01',
+                                    '10-00',
+                                    '11-01', '11-10',
+                                    '12-02', '12-10', '12-11',
+                                    '20-00', '20-10',
+                                    '21-01', '21-11', '21-20',
+                                    '22-02', '22-12', '22-20', '22-21'])
+    
+    
+    for i in range(n_games):
+        play_nim(p1, p2, starting_board_hash, win_reward, lose_reward)
+        temp = []
+        temp.append(p1.V['0, 1']['0, 1'])
+        temp.append(p1.V['0, 2']['0, 2'])
+        temp.append(p1.V['0, 2']['0, 1'])
+        temp.append(p1.V['1, 0']['1, 0'])    
+        temp.append(p1.V['1, 1']['1, 0'])
+        temp.append(p1.V['1, 1']['0, 1'])        
+        temp.append(p1.V['1, 2']['1, 0'])
+        temp.append(p1.V['1, 2']['0, 2'])
+        temp.append(p1.V['1, 2']['0, 1'])
+        temp.append(p1.V['2, 0']['2, 0'])
+        temp.append(p1.V['2, 0']['1, 0'])
+        temp.append(p1.V['2, 1']['2, 0'])
+        temp.append(p1.V['2, 1']['1, 0'])
+        temp.append(p1.V['2, 1']['0, 1'])
+        temp.append(p1.V['2, 2']['2, 0'])
+        temp.append(p1.V['2, 2']['1, 0'])
+        temp.append(p1.V['2, 2']['0, 2'])
+        temp.append(p1.V['2, 2']['0, 1'])
+        
+        temp = np.array(temp)
+        mu_series.loc[i] = temp[:,0]
+        lamb_series.loc[i] = temp[:,1]
+        alpha_series.loc[i] = temp[:,2]
+        beta_series.loc[i] = temp[:,3]
+    
+    mu_series.to_csv('../final/Bayes_vis/' + p1.name + '_mu_series.csv', index=False)
+    lamb_series.to_csv('../final/Bayes_vis/' + p1.name + '_lamb_series.csv', index=False)
+    alpha_series.to_csv('../final/Bayes_vis/' + p1.name + '_alpha_series.csv', index=False)
+    beta_series.to_csv('../final/Bayes_vis/' + p1.name + '_beta_series.csv', index=False)
+
+    
 def bayesVis():
-    print('v')
+    rnd.seed(898)
+    mu_0 = 0
+    lamb_0 = 2
+    alpha_0 = 1/2
+    beta_0 = 1
+    N_GAMES = 10000
+    
+    # conservative learner
+    discount = 0.5
+    starting_board_hash = get_hash([2,2])
+    p1 = BayesAgent('conservative',  starting_board_hash, mu_0, lamb_0, alpha_0, beta_0, discount)
+    p2 = BayesAgent('conservative',  starting_board_hash, mu_0, lamb_0, alpha_0, beta_0, discount)
+    
+    log_Bayes_learn(N_GAMES, p1, p2, 1, -1)
+    
+    # aggressive learner
+    discount = 0.9
+    p1 = BayesAgent('aggressive',  starting_board_hash, mu_0, lamb_0, alpha_0, beta_0, discount)
+    p2 = BayesAgent('aggressive',  starting_board_hash, mu_0, lamb_0, alpha_0, beta_0, discount)
+    log_Bayes_learn(N_GAMES, p1, p2, 1, -1)
+    
+    print('complete')
+    
+    
+    
+    
     
 
 if __name__ == "__main__":
     # vis_learning()      # 15m
-    QvQgrid()           # 5h
-    QtvQtgrid()         # 20m
-    bayesAgents()       # 2.5h
-    # bayesVis()
+    # QvQgrid()           # 5h
+    # QtvQtgrid()         # 20m
+    # bayesAgents()       # 2.5h
+    bayesVis()
     # BestvRand()
