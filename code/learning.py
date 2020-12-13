@@ -259,6 +259,7 @@ def log_Bayes_learn(n_games, p1, p2, win_reward, lose_reward):
     starting_board_hash = get_hash([2,2])
     
     # values of mu over time
+    # to match writeup, this should be 'm_series'
     mu_series = pd.DataFrame(columns=['01-00', 
                                     '02-00', '02-01',
                                     '10-00',
@@ -267,7 +268,8 @@ def log_Bayes_learn(n_games, p1, p2, win_reward, lose_reward):
                                     '20-00', '20-10',
                                     '21-01', '21-11', '21-20',
                                     '22-02', '22-12', '22-20', '22-21'])
-    lamb_series = pd.DataFrame(columns=['01-00', 
+    # to match writeup, this should be 'nu_series'
+    tau_series = pd.DataFrame(columns=['01-00', 
                                     '02-00', '02-01',
                                     '10-00',
                                     '11-01', '11-10',
@@ -317,12 +319,12 @@ def log_Bayes_learn(n_games, p1, p2, win_reward, lose_reward):
         
         temp = np.array(temp)
         mu_series.loc[i] = temp[:,0]
-        lamb_series.loc[i] = temp[:,1]
+        tau_series.loc[i] = temp[:,1]
         alpha_series.loc[i] = temp[:,2]
         beta_series.loc[i] = temp[:,3]
     
     mu_series.to_csv('../final/Bayes_vis/' + p1.name + '_mu_series.csv', index=False)
-    lamb_series.to_csv('../final/Bayes_vis/' + p1.name + '_lamb_series.csv', index=False)
+    tau_series.to_csv('../final/Bayes_vis/' + p1.name + '_tau_series.csv', index=False)
     alpha_series.to_csv('../final/Bayes_vis/' + p1.name + '_alpha_series.csv', index=False)
     beta_series.to_csv('../final/Bayes_vis/' + p1.name + '_beta_series.csv', index=False)
 
@@ -350,16 +352,12 @@ def bayesVis():
     log_Bayes_learn(N_GAMES, p1, p2, 1, -1)
     
     print('complete')
-    
-    
-    
-    
-    
+        
 
 if __name__ == "__main__":
     # vis_learning()      # 15m
     # QvQgrid()           # 5h
     # QtvQtgrid()         # 20m
     # bayesAgents()       # 2.5h
-    bayesVis()
+    bayesVis()          # 
     # BestvRand()
