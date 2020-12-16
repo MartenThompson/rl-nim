@@ -1,6 +1,3 @@
-# Primary script in project
-
-
 import numpy.random as rnd
 import sys
 

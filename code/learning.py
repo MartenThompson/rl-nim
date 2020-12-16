@@ -1,12 +1,15 @@
+# Primary script in project. 
+# Orchestrates the simulations used in report.
+
 import numpy as np
 import numpy.random as rnd
 import pandas as pd
 from agents import QAgent
 from agents import QtAgent
 from agents import BayesAgent
-from agents import PerfectAgent
 from statesActions import get_hash
 
+import copy
 import csv
 from datetime import datetime
 
@@ -352,12 +355,77 @@ def bayesVis():
     log_Bayes_learn(N_GAMES, p1, p2, 1, -1)
     
     print('complete')
+
+
+def BestvEachOther():
+    n_games = 25000
+    reps = 5
+    mu_0 = 0
+    lamb_0 = 2
+    alpha_0 = 1/2
+    beta_0 = 1
+
+    dummy_board = get_hash([1,2,3]) # will be replaced each game below
+    players = [QAgent('best_Q', dummy_board, 0.0, 0.1, 0.1, -0.9), 
+               QtAgent('best_Qt', dummy_board, 0.0, 0.9, 0.1, -0.9, 0.0001),
+               BayesAgent('best_Bayes', dummy_board, mu_0, lamb_0, alpha_0, beta_0, 0.9),
+               QAgent('best_random', dummy_board, 0.0, 1, 0, 0)]
+    
+    versus = [[p1,copy.deepcopy(p2)] for p1 in players for p2 in players]
+    
+    for v in versus:
+        p1 = v[0]
+        p2 = v[1]
+        print(p1.name, ' vs ', p2.name)
+              
+        p1_opt_percs = []
+        p1_winlose = []
+        p2_opt_percs = []
+        p2_winlose = []
         
+        for i in range(reps):
+            print(i+1, '/', reps)
+            
+            bd = rnd.randint(0,9,3).tolist()
+            if sum(bd) >= 0:
+                starting_board_hash = get_hash(rnd.randint(0,9,3).tolist())
+            else:
+                starting_board_hash = get_hash([5,5,5]) 
+            
+            
+            p1.previous_state = starting_board_hash
+            p2.previous_state = starting_board_hash
+            
+            [p1_stats, p2_stats] = train_agents(n_games, p1, p2, starting_board_hash, 1, -1, False)
+            p1_opt_percs.append(p1_stats[0])
+            p1_winlose.append(p1_stats[1])
+            p2_opt_percs.append(p2_stats[0])
+            p2_winlose.append(p2_stats[1])            
+        
+        file_name = '../final/PvP/opt_moves' + p1.name + 'VS' + p2.name
+        file_contents = p1_opt_percs
+        log_contents(file_name, file_contents)
+        
+        file_name = '../final/PvP/opt_moves' + p2.name + 'VS' + p1.name
+        file_contents = p2_opt_percs
+        log_contents(file_name, file_contents)
+            
+        file_name = '../final/PvP/wins' + p1.name + 'VS' + p2.name
+        file_contents = p1_winlose
+        log_contents(file_name, file_contents)
+        
+        file_name = '../final/PvP/wins' + p2.name + 'VS' + p1.name
+        file_contents = p2_winlose
+        log_contents(file_name, file_contents)
+
+
+
+    print('learning complete')        
 
 if __name__ == "__main__":
-    # vis_learning()      # 15m
+    vis_learning()      # 15m
     # QvQgrid()           # 5h
     # QtvQtgrid()         # 20m
     # bayesAgents()       # 2.5h
-    bayesVis()          # 
-    # BestvRand()
+    # bayesVis()          # 20m
+    # BestvEachOther()    # 1.5h 

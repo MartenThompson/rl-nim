@@ -5,7 +5,7 @@ from datetime import datetime
 import numpy.random as rnd
 import numpy as np
 import sys
-import numpy as np
+
 from nimUtils import board_bitsum
 from nimUtils import rand_move
 from statesActions import initialize_Q
@@ -281,6 +281,7 @@ class BayesAgent():
         num_piles = len(de_hash(starting_board_hash))
         self.V = initialize_V(num_piles, mu_0, lamb_0, alpha_0, beta_0)
         
+        self.previous_state = None
         #self.mu = mu_0
         #self.lamb = lamb_0
         #self.alpha = alpha_0
